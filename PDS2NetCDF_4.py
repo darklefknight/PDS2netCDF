@@ -1,4 +1,4 @@
-path = '/scratch/local1/m300517/temp/160814_130355.pds'
+path = '/data/mpi/mpiaes/obs/m300517/160814_130355.pds'
 Folder   = path[:-17]
 Filename = path[len(path)-17:]
 
@@ -26,6 +26,7 @@ import numpy.ma as ma
 from netCDF4 import Dataset
 import os
 import time as Time
+import asyncio
 
 
 #-------------------read pds file-------------------------------
@@ -42,9 +43,9 @@ pds.SPC[:,:,:,:] = np.roll(pds.SPC[:,:,:,:],128, axis = 3)
 avc = pds.parameter.avc
 #--------------------Hildebrand-Sekhon algorythm----------------
 
-def HS_level(spectrum, p):
+async def HS_level(spectrum, p):
     #p  number of spectral averages
-    
+
     maxSn = np.nanmax(spectrum)
     #Sn0    = np.double(sorted(spectrum[:]), reverse=False)
     #Sn     = np.fliplr([Sn0])
@@ -66,14 +67,25 @@ def HS_level(spectrum, p):
     return SnR2     #White noise level
 
 
+async def start_HS(SPC_complete=pds.SPC, avc=avc):
+     for k in range(0, 2):
+         for i in range(len(SPC_complete[:, 0, k, 0])):
+             for j in range(len(SPC_complete[0, :, k, 0])):
+                WhiteNoise_Thresh[i, j, k] = await HS_level(SPC_complete[i, j, k, :], avc)
+
+
 #--------------------Noise level estimation for whole pds file-------
 print("Remove white noise (Hildebrand-Sekhon)")
 WhiteNoise_Thresh = np.zeros((len(pds.SPC[:,0,0,0]), len(pds.SPC[0,:,0,0]), len(pds.SPC[0,0,:,0])))
 
-for k in range(0,2):
-	for i in range(len(pds.SPC[:,0,k,0])):
-	    for j in range(len(pds.SPC[0,:,k,0])):
-	            WhiteNoise_Thresh[i,j,k] = HS_level(pds.SPC[i,j,k,:],avc)
+loop = asyncio.get_event_loop()
+ids = loop.run_until_complete(start_HS())
+
+
+# for k in range(0,2):
+# 	for i in range(len(pds.SPC[:,0,k,0])):
+# 	    for j in range(len(pds.SPC[0,:,k,0])):
+# 	            WhiteNoise_Thresh[i,j,k] = HS_level(pds.SPC[i,j,k,:],avc)
 
 
 Spectra_HS          = pds.SPC[:,:,:,:]
