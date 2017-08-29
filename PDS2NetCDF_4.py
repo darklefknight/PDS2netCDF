@@ -27,10 +27,12 @@ from netCDF4 import Dataset
 import os
 import time as Time
 
+
 #-------------------read pds file-------------------------------
 start_date = datetime.datetime(int(year_str),int(month_str),int(day_str),int(hourBeg_str),int(minuteBeg_str),0,0)
 end_date   = datetime.datetime(int(year_str),int(month_str),int(day_str),int(hourEnd_str),int(minuteEnd_str),0,0)
 
+print(start_date,end_date)
 
 pds=pdsdata(pdsfile=[path])
 pds.readDataSection(["SPC","SNR","Z"], start_time=start_date, stop_time=end_date, quiet=False)

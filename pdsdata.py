@@ -331,6 +331,7 @@ class pdsdata:
         
         self.param  = []
         self.srvi   = []
+        self.srvi_values = []
 
         self.SNRco  = []
         self.VELco  = []
@@ -339,13 +340,14 @@ class pdsdata:
         self.VELcx  = []
         self.RMScx  = []
         self.EXPco  = []
-        self.SPC  = []
+        # self.SPC  = []
         self.HNE  = []
         self.SPC  = []
         self.IQ   = []
 
         if pdsfile != None:
             if isinstance(pdsfile,str):
+                f = pdsfile
                 print((' .. opening: %s'%f))
                 self.openpdsfile(f)
                 self.create_indextable()
@@ -359,12 +361,12 @@ class pdsdata:
     def openpdsfile(self, pdsfile):
 
         self.filesize = os.path.getsize(pdsfile)
-        self.fh = open(pdsfile,'r')
-        name  = "%s" % self.fh.read(32).rstrip('\x00').replace('\n','')
-        time  = "%s" % self.fh.read(32).rstrip('\x00').replace('\n','')
-        oper  = "%s" % self.fh.read(64).rstrip('\x00').replace('\n','')
-        place = "%s" % self.fh.read(128).rstrip('\x00').replace('\n','')
-        desc  = "%s" % self.fh.read(256).rstrip('\x00').replace('\n','')
+        self.fh = open(pdsfile,'rb')
+        name  = "%s" % self.fh.read(32).rstrip(b'\x00').replace(b'\n',b'')
+        time  = "%s" % self.fh.read(32).rstrip(b'\x00').replace(b'\n',b'')
+        oper  = "%s" % self.fh.read(64).rstrip(b'\x00').replace(b'\n',b'')
+        place = "%s" % self.fh.read(128).rstrip(b'\x00').replace(b'\n',b'')
+        desc  = "%s" % self.fh.read(256).rstrip(b'\x00').replace(b'\n',b'')
         self.fh.seek(512, 1)
         magic = self.fh.read(4)
         self.fh.seek(-4-512, 1)
@@ -397,7 +399,8 @@ class pdsdata:
 
     def getByteSignature(self,byteStructure,byteCount):
 
-        sig = byteStructure[byteCount:byteCount+4]
+        sig = byteStructure[byteCount:byteCount+4].decode()
+        # print(sig)
         sigSize = unpack('=l',byteStructure[byteCount+4:byteCount+8])[0]
         return (sig, sigSize)
 
@@ -416,15 +419,17 @@ class pdsdata:
         
         while (byteCount < len(byteStructure)):
                         
-            (subsig, subsigSize) = self.getByteSignature(byteStructure,byteCount)
+            subsig, subsigSize = self.getByteSignature(byteStructure,byteCount)
             byteCount += 8 # count header size from sub structure
-            
-            #print(subsig,subsigSize)
-            
+
+            # print(subsig,subsigSize)
+
+
             if subsig == "PPAR":
                 self.parameter = ppar(byteStructure[byteCount:byteCount+subsigSize])
                 self.param.append(self.parameter)
             elif subsig == "SRVI":
+                # print(" in SRVI right now!")
                 self.srvi_values = srvi(byteStructure[byteCount:byteCount+subsigSize])
                 self.srvi.append(self.srvi_values)
             if subsig[0:3] == "SNR" and ("SNR" or "Z" in product_list):
@@ -527,6 +532,8 @@ class pdsdata:
             (sig, sigSize) = self.getSignature()
             byteStructure = self.fh.read(sigSize)
             self.evaluateByteStructure(byteStructure)
+            # srvi_values_tm = self.srvi[0].values["Tm"]
+            # print(self.srvi_values)
             t = datetime.datetime(1970,1,1)+datetime.timedelta(seconds=self.srvi_values.values["Tm"])
             self.time_list.append(t)
             self.fh_list.append(self.fh)
@@ -554,7 +561,9 @@ class pdsdata:
     def setDataPosition(self, selected_time, product_list=[]):
 
         self.time_index = bisect.bisect_left(self.time_list ,selected_time)
-        
+
+        # print(self.time_index)
+
         if self.fh_list[self.time_index] != self.fh:
             self.fh = self.fh_list[self.time_index]
         self.fh.seek(self.ptr_list[self.time_index])
@@ -571,7 +580,10 @@ class pdsdata:
         if not stop_time:
             stop_time  = self.time_list[-1]
 
+        # print(start_time,stop_time)
+        # print(self.time_list)
         self.setDataPosition(selected_time = start_time)
+
 
         while self.time_list[self.time_index]<stop_time:
 
@@ -603,9 +615,9 @@ class pdsdata:
 
 if __name__ == '__main__':
 
-    pds=pdsdata(pdsfile='/Data/miraMACS/pds/130829_150635.pds')
-
+    # pds=pdsdata(pdsfile='/Data/miraMACS/pds/130829_150635.pds')
+    pds=pdsdata(pdsfile='/scratch/local1/m300517/temp/160814_130355.pds')
     start_time = datetime.datetime(2013, 8, 29, 15, 6)
     stop_time = datetime.datetime(2013, 8, 29, 15, 7)
 
-    pds.readDataSection(["SPC","SNR","Z","VEL","RMS"], start_time=start_time, stop_time=stop_time)
+    pds.readDataSection(["SPC","SNR","Z","VEL","RMS"])
