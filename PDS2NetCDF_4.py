@@ -1,6 +1,6 @@
 '''
 - python3 - version.
-- set up for multicoreprocessing by Tobias Machnitzki
+- set up for multicoreprocessing by Tobias Machnitzki (tobias.machnitzki@mpimet.mpg.de)
 
 '''
 
