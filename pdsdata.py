@@ -28,6 +28,7 @@
  -------
    2010-01 Original python code by Kersten Schmidt (kersten.Schmidt@dlr.de)
    2013-01 Adopted and added IQ reader by Florian Ewald (florian.ewald@dlr.de)
+   2017-08 Converted to python3 by Tobias Machnitzki (tobias.machnitzki@mpimet.mpg.de)
 """ 
 
 
@@ -248,7 +249,7 @@ class ppar:
         self.Tau = 100. * (ppar_structure[1] + 1)  #* 1e-9 pulse width in ns
         #self.delta_h = 0.5 * c * self.Tau *1e-9    # IDL definition
         self.dH      =  15*self.Tau/100           # showradar perl definition
-        #print "delta h: %f %f" %(self.delta_h,self.dH)
+
         if magic == ('HALO' or 'METL'):
             self.radar_type = 'OLD'
             self.SPC_dtype  = 'long'
@@ -340,7 +341,6 @@ class pdsdata:
         self.VELcx  = []
         self.RMScx  = []
         self.EXPco  = []
-        # self.SPC  = []
         self.HNE  = []
         self.SPC  = []
         self.IQ   = []
@@ -393,7 +393,7 @@ class pdsdata:
             return ('',0)
         sig = byte_structure[0:4]
         sigSize = unpack('=l',byte_structure[4:8])[0]
-        #print sig, sigSize
+
         return (sig, sigSize)
 
 
@@ -423,7 +423,6 @@ class pdsdata:
             byteCount += 8 # count header size from sub structure
 
             # print(subsig,subsigSize)
-
 
             if subsig == "PPAR":
                 self.parameter = ppar(byteStructure[byteCount:byteCount+subsigSize])
@@ -532,8 +531,6 @@ class pdsdata:
             (sig, sigSize) = self.getSignature()
             byteStructure = self.fh.read(sigSize)
             self.evaluateByteStructure(byteStructure)
-            # srvi_values_tm = self.srvi[0].values["Tm"]
-            # print(self.srvi_values)
             t = datetime.datetime(1970,1,1)+datetime.timedelta(seconds=self.srvi_values.values["Tm"])
             self.time_list.append(t)
             self.fh_list.append(self.fh)
@@ -552,7 +549,6 @@ class pdsdata:
     def getNextDataset(self, product_list):
 
         (sig, sigSize) = self.getSignature()
-        #print sig, sigSize
         byteStructure = self.fh.read(sigSize)
         self.evaluateByteStructure(byteStructure, product_list)
         return
@@ -561,8 +557,6 @@ class pdsdata:
     def setDataPosition(self, selected_time, product_list=[]):
 
         self.time_index = bisect.bisect_left(self.time_list ,selected_time)
-
-        # print(self.time_index)
 
         if self.fh_list[self.time_index] != self.fh:
             self.fh = self.fh_list[self.time_index]
@@ -581,7 +575,7 @@ class pdsdata:
             stop_time  = self.time_list[-1]
 
         # print(start_time,stop_time)
-        # print(self.time_list)
+
         self.setDataPosition(selected_time = start_time)
 
 

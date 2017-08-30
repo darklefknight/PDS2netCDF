@@ -1,3 +1,8 @@
+'''
+- python3 - version.
+- set up for multicoreprocessing by Tobias Machnitzki
+
+'''
 
 
 
@@ -11,7 +16,7 @@ import os
 import time as Time
 # import asyncio
 import functools
-from dask.distributed import Client
+# from dask.distributed import Client
 from joblib import Parallel,delayed
 
 
@@ -123,7 +128,8 @@ if __name__ == "__main__":
     print(start_date,end_date)
 
     pds=pdsdata(pdsfile=[path])
-    pds.readDataSection(["SPC","SNR","Z"], start_time=start_date,stop_time=end_date,quiet=True)
+    # pds.readDataSection(["SPC","SNR","Z"], start_time=start_date,stop_time=end_date,quiet=True)
+    pds.readDataSection(["SPC", "SNR", "Z"], quiet=False)
 
     pds.SPC[:,:,:,:] = np.roll(pds.SPC[:,:,:,:],128, axis = 3)
 
@@ -133,7 +139,7 @@ if __name__ == "__main__":
     print("Remove white noise (Hildebrand-Sekhon)")
     WhiteNoise_Thresh = np.zeros((len(pds.SPC[:, 0, 0, 0]), len(pds.SPC[0, :, 0, 0]), len(pds.SPC[0, 0, :, 0])))
 
-    Parallel(n_jobs=-1,verbose=1,backend="multiprocessing")(map(delayed(start_HS),range(len(pds.SPC[:, 0, 0, 0]))))
+    Parallel(n_jobs=-1,verbose=5,backend="multiprocessing")(map(delayed(start_HS),range(len(pds.SPC[:, 0, 0, 0]))))
 
     # futures = client.map(delayed(start_HS),range(len(pds.SPC[:, 0, 0, 0])))
     # temp = client.gather(futures)
