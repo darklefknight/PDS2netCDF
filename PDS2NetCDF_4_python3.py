@@ -5,7 +5,7 @@
 '''
 
 # ------------------import modules-------------------------------
-from pdsdata import pdsdata
+from pdsdata_python3 import pdsdata
 import datetime as datetime
 import numpy as np
 import numpy.ma as ma
